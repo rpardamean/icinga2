@@ -4,12 +4,6 @@
 FROM debian:buster
 
 ENV APACHE2_HTTP=REDIRECT \
-    ICINGA2_FEATURE_GRAPHITE=false \
-    ICINGA2_FEATURE_GRAPHITE_HOST=graphite \
-    ICINGA2_FEATURE_GRAPHITE_PORT=2003 \
-    ICINGA2_FEATURE_GRAPHITE_URL=http://graphite \
-    ICINGA2_FEATURE_GRAPHITE_SEND_THRESHOLDS="true" \
-    ICINGA2_FEATURE_GRAPHITE_SEND_METADATA="false" \
     ICINGA2_USER_FULLNAME="Icinga2" \
     ICINGA2_FEATURE_DIRECTOR="true" \
     ICINGA2_FEATURE_DIRECTOR_KICKSTART="true" \
@@ -33,7 +27,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     lsb-release \
     mailutils \
     mariadb-client \
-    mariadb-server \
     netbase \
     openssh-client \
     openssl \
@@ -54,8 +47,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && rm -rf /var/lib/apt/lists/*
 
 RUN export DEBIAN_FRONTEND=noninteractive \
-    && curl -s https://packages.icinga.com/icinga.key \
-    | apt-key add - \
+    && curl -s https://packages.icinga.com/icinga.key | apt-key add - \
     && echo "deb http://packages.icinga.org/debian icinga-$(lsb_release -cs) main" > /etc/apt/sources.list.d/icinga2.list \
     && echo "deb http://deb.debian.org/debian $(lsb_release -cs)-backports main" > /etc/apt/sources.list.d/$(lsb_release -cs)-backports.list \
     && apt-get update \
@@ -74,8 +66,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ARG GITREF_MODGRAPHITE=master
-ARG GITREF_MODAWS=master
 ARG GITREF_REACTBUNDLE=v0.7.0
 ARG GITREF_INCUBATOR=v0.5.0
 ARG GITREF_IPL=v0.3.0
@@ -88,17 +78,6 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
     # fix for https://github.com/Icinga/icingaweb2-module-director/issues/1993
     && sed -i 's/change_time TIMESTAMP NOT NULL,/change_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,/' \
     /usr/local/share/icingaweb2/modules/director/schema/mysql.sql \
-    # Icingaweb2 Graphite
-    && mkdir -p /usr/local/share/icingaweb2/modules/graphite \
-    && wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-graphite/archive/v1.1.0.tar.gz" \
-    | tar xz --strip-components=1 --directory=/usr/local/share/icingaweb2/modules/graphite -f - \
-    # Icingaweb2 AWS
-    && mkdir -p /usr/local/share/icingaweb2/modules/aws \
-    && wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-aws/archive/v1.0.0.tar.gz" \
-    | tar xz --strip-components=1 --directory=/usr/local/share/icingaweb2/modules/aws -f - \
-    && wget -q --no-cookies "https://github.com/aws/aws-sdk-php/releases/download/2.8.30/aws.zip" \
-    && unzip -d /usr/local/share/icingaweb2/modules/aws/library/vendor/aws aws.zip \
-    && rm aws.zip \
     # Module Reactbundle
     && mkdir -p /usr/local/share/icingaweb2/modules/reactbundle/ \
     && wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-reactbundle/archive/v0.7.0.tar.gz" \
